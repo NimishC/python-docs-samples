@@ -1,10 +1,30 @@
+# Copyright 2020, Google, LLC.
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import base64
 import json
 import os
 from googleapiclient import discovery
-PROJECT_ID = os.getenv('GCP_PROJECT')
+from google.cloud import billing
+
+PROJECT_ID = os.getenv('GOOGLE_CLOUD_PROJECT')
 PROJECT_NAME = f'projects/{PROJECT_ID}'
+
 def stop_billing(data, context):
+    """
+    Disable billing for the target project, set in the GOOGLE_CLOUD_PROJECT
+    environment variable.
+    """
     pubsub_data = base64.b64decode(data['data']).decode('utf-8')
     pubsub_json = json.loads(pubsub_data)
     cost_amount = pubsub_json['costAmount']
@@ -17,11 +37,13 @@ def stop_billing(data, context):
         print('No project specified with environment variable')
         return
 
+    """
     billing = discovery.build(
         'cloudbilling',
         'v1',
         cache_discovery=False,
     )
+    """
 
     projects = billing.projects()
 
@@ -55,7 +77,7 @@ def __disable_billing_for_project(project_name, projects):
     Disable billing for a project by removing its billing account
     @param {string} project_name Name of project disable billing on
     """
-    body = {'billingAccountName': ''}  # Disable billing
+    body = {'billingAccountName': ''}  # Disables billing
     try:
         res = projects.updateBillingInfo(name=project_name, body=body).execute()
         print(f'Billing disabled: {json.dumps(res)}')
